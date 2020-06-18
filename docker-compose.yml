@@ -1,0 +1,77 @@
+version: '3.7'
+services:
+       nginx:
+        image: nginx:latest
+        container_name: nginx
+        restart: always
+        networks:
+          - all
+        depends_on:
+          - php
+        volumes:
+          - ./conf/nginx/default.conf:/etc/nginx/conf.d/default.conf
+          - ./public/:/var/www/html
+        ports:
+          - 80:80
+          - 443:443
+
+       apache:
+        build: './setup/apache'
+        container_name: apache
+        restart: always
+        networks:
+          - all
+        depends_on:
+          - php
+        volumes:
+          - ./public/:/var/www/html
+        ports:
+          - 8080:80
+       php:
+        build: './setup/php'
+        container_name: php
+        restart: always
+        networks:
+          - all
+        volumes:
+          - ./public/:/var/www/html
+
+       mariadb:
+        image: mariadb:latest
+        container_name: mariadb
+        restart: always
+        depends_on:
+          - php
+        networks:
+          - all
+        environment:
+          MYSQL_ROOT_PASSWORD: vadim2853
+        volumes:
+          - ./DB/mariadb:/var/lib/mysql
+
+       phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: phpmyadmin
+        links:
+          - mariadb:db
+        restart: always
+        networks:
+          - all
+        environment:
+         PMA_HOST: mariadb
+         PMA_USER: root
+         PMA_PASSWORD: vadim2853
+        ports:
+          - 8090:80
+        depends_on:
+          - mariadb
+       crontab:
+        build: './setup/crontab'
+        container_name: crontab
+        restart: always
+        ports:
+          - 8000:8000
+        volumes:
+          - ./public:/var/www/html
+networks:
+  all:
